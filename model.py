@@ -4,45 +4,49 @@ import cv2
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Lambda, Cropping2D, Convolution2D, Flatten, Dense, Dropout
+from sklearn.model_selection import train_test_split 
+import sklearn
 
-data_path = 'myData1'
 
-lines = []
-images = []
-steering = []
+data_path = 'data'
 
+samples = []
 
 with open(data_path + '/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     for line in reader:
-        lines.append(line)
+        samples.append(line)
+csvfile.close()
 
-# Delet first title line
-del lines[0]
-#print(lines[0])
+train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
-for line in lines:
-    image_center = data_path + '/IMG/' + line[0].split('/')[-1]
-    image_left = data_path + '/IMG/' + line[1].split('/')[-1]
-    image_right = data_path + '/IMG/' + line[2].split('/')[-1]
+def generator(samples, batch_size=32):
+    n_samples = len(samples)
+    print(n_samples)
+    while 1:
+        shuffle(samples)
+        for offset in range(0, n_samples, batch_size):
+            batch_samples = samples[offset:offset+batch_size]
 
-    img_center = cv2.cvtColor(cv2.imread(image_center), cv2.COLOR_BGR2RGB) 
-    images.append(img_center)
-    img_left = cv2.cvtColor(cv2.imread(image_left), cv2.COLOR_BGR2RGB) 
-    images.append(img_left)
-    img_right = cv2.cvtColor(cv2.imread(image_right), cv2.COLOR_BGR2RGB) 
-    images.append(img_right)
+            images = []
+            steering = []
+            for batch_sample in batch_samples:
+                file_name = data_path + './IMG/' + batch_sample[0].split('/')[-1]
+                center_image = cv2.cvtColor(cv2.imread(file_name), cv2.COLOR_BGR2RGB)
+                center_steering = float(batch_sample[3])
+                images.append(center_image)
+                steering.append(center_steering)
+                # Flip image/measurement
+                images.append(cv2.flip(center_image, 1))
+                steering.append(-center_steering)
+            
+            print(len(images)); print(len(steering))
+            X_train = np.array(images)
+            y_train = np.array(steering)
+            yield sklearn.utils.shuffle(X_train, y_train)
 
-    correction = 0.2
-    steering_center = float(line[3])
-    steering.append(steering_center)
-    steering_left = steering_center + correction 
-    steering.append(steering_left)
-    steering_right = steering_center - correction
-    steering.append(steering_right)
-
-X_train = np.array(images)
-y_train = np.array(steering)
+train_generator = generator(train_samples, batch_size=32)
+validation_generator = generator(validation_samples, batch_size=32)
 
 model = Sequential()
 model.add(Lambda(lambda x: (x / 255) - 0.5, input_shape=(160,320,3)))
@@ -61,7 +65,9 @@ model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
 
-model.fit(X_train, y_train, validation_split=0.2, shuffle=True, nb_epoch=5)
+model.fit_generator(train_generator, samples_per_epoch=len(train_samples), / 
+        validation_data=validation_generator, nb_val_samples=len(validation_samples), /
+        nb_epoch=3)
 
 model.save('model.h5')
 
