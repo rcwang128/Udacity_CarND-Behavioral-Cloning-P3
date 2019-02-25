@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import sklearn
 
 
-data_path = 'data'
+data_path = 'data_2laps'
 
 samples = []
 
@@ -31,7 +31,7 @@ def generator(samples, batch_size=32):
             images = []
             steering = []
             for batch_sample in batch_samples:
-                file_name = data_path + './IMG/' + batch_sample[0].split('/')[-1]
+                file_name = data_path + '/IMG/' + batch_sample[0].split('/')[-1]
                 center_image = cv2.cvtColor(cv2.imread(file_name), cv2.COLOR_BGR2RGB)
                 center_steering = float(batch_sample[3])
                 images.append(center_image)
@@ -40,10 +40,11 @@ def generator(samples, batch_size=32):
                 images.append(cv2.flip(center_image, 1))
                 steering.append(-center_steering)
             
-            print(len(images)); print(len(steering))
             X_train = np.array(images)
             y_train = np.array(steering)
             yield sklearn.utils.shuffle(X_train, y_train)
+
+    print(len(X_train)); print(len(y_train))
 
 train_generator = generator(train_samples, batch_size=32)
 validation_generator = generator(validation_samples, batch_size=32)
@@ -65,9 +66,7 @@ model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
 
-model.fit_generator(train_generator, samples_per_epoch=len(train_samples), / 
-        validation_data=validation_generator, nb_val_samples=len(validation_samples), /
-        nb_epoch=3)
+model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
 
 model.save('model.h5')
 
