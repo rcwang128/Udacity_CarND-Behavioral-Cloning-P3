@@ -41,16 +41,16 @@ def generator(samples, batch_size=32):
 
                 center_image = cv2.cvtColor(cv2.imread(file_name), cv2.COLOR_BGR2RGB)
                 images.append(center_image)
-                #left_image = cv2.cvtColor(cv2.imread(file_name1), cv2.COLOR_BGR2RGB)
-                #images.append(left_image)
+                left_image = cv2.cvtColor(cv2.imread(file_name1), cv2.COLOR_BGR2RGB)
+                images.append(left_image)
                 right_image = cv2.cvtColor(cv2.imread(file_name2), cv2.COLOR_BGR2RGB)
                 images.append(right_image)
 
                 center_steering = float(batch_sample[3])
                 steering.append(center_steering)
                 steering_coef = 0.2
-                #left_steering = center_steering + steering_coef
-                #steering.append(left_steering)
+                left_steering = center_steering + steering_coef
+                steering.append(left_steering)
                 right_steering = center_steering - steering_coef
                 steering.append(right_steering)
                 
@@ -92,5 +92,5 @@ model.compile(loss='mse', optimizer=adam, metrics=['mae','acc'])
 
 model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
 
-model.save('model2_test3.h5')
+model.save('model2_test4.h5')
 
