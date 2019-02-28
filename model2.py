@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import cv2
+import math
 import tensorflow as tf
 from random import shuffle
 from keras.models import Sequential
@@ -10,7 +11,7 @@ from sklearn.model_selection import train_test_split
 import sklearn
 
 
-data_path = 'data'
+data_path = 'myData0'
 
 samples = []
 
@@ -67,8 +68,9 @@ def generator(samples, batch_size=32):
 
     #print(len(X_train)); print(len(y_train))
 
-train_generator = generator(train_samples, batch_size=32)
-validation_generator = generator(validation_samples, batch_size=32)
+batch_size = 32
+train_generator = generator(train_samples, batch_size=batch_size)
+validation_generator = generator(validation_samples, batch_size=batch_size)
 
 model = Sequential()
 model.add(Lambda(lambda x: (x / 255) - 0.5, input_shape=(160,320,3)))
@@ -90,7 +92,9 @@ model.add(Dense(1))
 adam = optimizers.Adam(lr=0.0001)
 model.compile(loss='mse', optimizer=adam, metrics=['mae','acc'])
 
-model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
+train_steps = math.ceil(len(train_samples)/batch_size)
+val_steps = math.ceil(len(validation_samples)/batch_size)
+model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=validation_generator, validation_steps=val_steps, nb_epoch=5)
 
-model.save('model2_test4.h5')
+model.save('model2.h5')
 
