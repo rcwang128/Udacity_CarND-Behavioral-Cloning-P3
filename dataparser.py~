@@ -4,7 +4,7 @@ import cv2
 import random
 from matplotlib import pyplot as plt
 
-data_path = 'myData0'
+data_path = 'data'
 #data_path2 = 'data_2laps'
 
 lines = []
